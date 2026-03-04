@@ -401,7 +401,27 @@
         {id: 'ar.hudhaify', name: 'علي الحذيفي', icon: 'fas fa-user'},
         {id: 'ar.muhammadjibreel', name: 'محمد جبريل', icon: 'fas fa-user'},
         {id: 'ar.aymanswaid', name: 'أيمن سويد', icon: 'fas fa-user'},
-        {id: 'ar.abdullahbasfar', name: 'عبد الله بصفر', icon: 'fas fa-user'}
+        {id: 'ar.abdullahbasfar', name: 'عبد الله بصفر', icon: 'fas fa-user'},
+        {id: 'ar.saoodshuraym', name: 'سعود الشريم (إصدار آخر)', icon: 'fas fa-user'},
+        {id: 'ar.khalefaaltunaiji', name: 'خليفة الطنيجي', icon: 'fas fa-user'},
+        {id: 'ar.ahmedajamy', name: 'أحمد العجمي', icon: 'fas fa-user'},
+        {id: 'ar.faresabbad', name: 'فارس عباد', icon: 'fas fa-user'},
+        {id: 'ar.abdurrahmaansudais', name: 'عبدالرحمن السديس (إصدار آخر)', icon: 'fas fa-user'},
+        {id: 'ar.yasseraldossari', name: 'ياسر الدوسري (إصدار آخر)', icon: 'fas fa-user'},
+        {id: 'ar.nabilrifai', name: 'نبيل الرفاعي', icon: 'fas fa-user'},
+        {id: 'ar.hanirifai', name: 'هاني الرفاعي', icon: 'fas fa-user'},
+        {id: 'ar.mohammadayyoub', name: 'محمد أيوب', icon: 'fas fa-user'},
+        {id: 'ar.abdullahawad', name: 'عبد الله عواد الجهني', icon: 'fas fa-user'},
+        {id: 'ar.ibrahimakhbar', name: 'إبراهيم الأخضر', icon: 'fas fa-user'},
+        {id: 'ar.sahlYassin', name: 'سهل ياسين', icon: 'fas fa-user'},
+        {id: 'ar.hatemfarid', name: 'حاتم فريد الواعر', icon: 'fas fa-user'},
+        {id: 'ar.muhammadtabalawi', name: 'محمد الطبلاوي', icon: 'fas fa-user'},
+        {id: 'ar.ahmedkhedralturky', name: 'أحمد خضر التركي', icon: 'fas fa-user'},
+        {id: 'ar.idrisabkar', name: 'إدريس أبكر', icon: 'fas fa-user'},
+        {id: 'ar.karimmansouri', name: 'كريم منصوري', icon: 'fas fa-user'},
+        {id: 'ar.salihaaltalib', name: 'صالح آل طالب', icon: 'fas fa-user'},
+        {id: 'ar.alshatri', name: 'أبو بكر الشاطري', icon: 'fas fa-user'},
+        {id: 'ar.muaiqly', name: 'ماهر المعيقلي (إصدار آخر)', icon: 'fas fa-user'}
     ];
     let activeMushafReciter = 'ar.alafasy';
     let activeListenReciter = null;
@@ -413,14 +433,15 @@
             if (!data?.data) return;
             const mapped = data.data
                 .filter(r => r.identifier && r.type === 'versebyverse')
-                .slice(0, 80)
+                .slice(0, 140)
                 .map(r => ({ id: r.identifier, name: r.name || r.englishName || r.identifier, icon: 'fas fa-user' }));
             const merged = [...topReciters];
             mapped.forEach(r => {
                 if (!merged.find(x => x.id === r.id)) merged.push(r);
             });
+            const capped = merged.slice(0, 100);
             topReciters.length = 0;
-            merged.forEach(r => topReciters.push(r));
+            capped.forEach(r => topReciters.push(r));
             populateMushafReciters();
             renderRecitersGrid();
         } catch(e) {}
@@ -820,15 +841,53 @@
         const extras = {
             'أذكار الاستغفار': [
                 { content: 'أستغفر الله العظيم الذي لا إله إلا هو الحي القيوم وأتوب إليه', count: '100' },
-                { content: 'رب اغفر لي وتب علي إنك أنت التواب الرحيم', count: '100' }
+                { content: 'رب اغفر لي وتب علي إنك أنت التواب الرحيم', count: '100' },
+                { content: 'اللهم اغفر لي وارحمني واهدني وعافني وارزقني', count: '50' }
             ],
             'أدعية الكرب': [
                 { content: 'لا إله إلا أنت سبحانك إني كنت من الظالمين', count: '40' },
-                { content: 'حسبي الله لا إله إلا هو عليه توكلت وهو رب العرش العظيم', count: '7' }
+                { content: 'حسبي الله لا إله إلا هو عليه توكلت وهو رب العرش العظيم', count: '7' },
+                { content: 'اللهم رحمتك أرجو فلا تكلني إلى نفسي طرفة عين', count: '33' }
             ],
             'أذكار متنوعة إضافية': [
                 { content: 'اللهم صل وسلم على نبينا محمد', count: '100' },
-                { content: 'سبحان الله وبحمده سبحان الله العظيم', count: '100' }
+                { content: 'سبحان الله وبحمده سبحان الله العظيم', count: '100' },
+                { content: 'لا حول ولا قوة إلا بالله', count: '100' }
+            ],
+            'أذكار الصبر': [
+                { content: 'إنا لله وإنا إليه راجعون، اللهم أجرني في مصيبتي واخلف لي خيرًا منها', count: '20' },
+                { content: 'اللهم لا سهل إلا ما جعلته سهلاً', count: '33' },
+                { content: 'اللهم ألهمني رشدي وقني شر نفسي', count: '40' }
+            ],
+            'أذكار الرزق والبركة': [
+                { content: 'اللهم اكفني بحلالك عن حرامك وأغنني بفضلك عمن سواك', count: '50' },
+                { content: 'رب إني لما أنزلت إلي من خير فقير', count: '70' },
+                { content: 'اللهم بارك لنا فيما رزقتنا', count: '33' }
+            ],
+            'أذكار السفر': [
+                { content: 'سبحان الذي سخر لنا هذا وما كنا له مقرنين وإنا إلى ربنا لمنقلبون', count: '3' },
+                { content: 'اللهم إنا نسألك في سفرنا هذا البر والتقوى', count: '3' },
+                { content: 'اللهم أنت الصاحب في السفر والخليفة في الأهل', count: '3' }
+            ],
+            'أذكار قبل النوم': [
+                { content: 'باسمك اللهم أموت وأحيا', count: '1' },
+                { content: 'اللهم قني عذابك يوم تبعث عبادك', count: '3' },
+                { content: 'سبحان الله 33 والحمد لله 33 والله أكبر 34', count: '1' }
+            ],
+            'أذكار بعد الصلاة': [
+                { content: 'أستغفر الله، أستغفر الله، أستغفر الله', count: '1' },
+                { content: 'اللهم أنت السلام ومنك السلام تباركت يا ذا الجلال والإكرام', count: '1' },
+                { content: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير', count: '10' }
+            ],
+            'أدعية الوالدين': [
+                { content: 'رب ارحمهما كما ربياني صغيرا', count: '40' },
+                { content: 'رب اغفر لي ولوالدي وللمؤمنين يوم يقوم الحساب', count: '30' },
+                { content: 'اللهم اغفر لوالدي وارفع درجاتهما في المهديين', count: '20' }
+            ],
+            'أدعية عامة جامعة': [
+                { content: 'ربنا آتنا في الدنيا حسنة وفي الآخرة حسنة وقنا عذاب النار', count: '100' },
+                { content: 'ربنا لا تزغ قلوبنا بعد إذ هديتنا وهب لنا من لدنك رحمة', count: '70' },
+                { content: 'اللهم إني أسألك العفو والعافية في الدنيا والآخرة', count: '60' }
             ]
         };
         Object.keys(extras).forEach(cat => {
