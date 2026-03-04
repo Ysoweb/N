@@ -164,20 +164,22 @@
         
         
 
-        .install-banner { position: fixed; top: 86px; left: 50%; transform: translateX(-50%); width: min(92%, 760px); background: var(--glass-bg); border: 1px solid var(--accent-light); border-radius: 18px; padding: 14px 18px; z-index: 95; display: none; align-items: center; justify-content: space-between; gap: 14px; box-shadow: 0 10px 30px rgba(42,42,42,0.08); backdrop-filter: blur(12px); }
-        .install-banner.show { display: flex; animation: fadeIn 0.4s var(--transition) forwards; }
-        .install-brand { display: flex; align-items: center; gap: 12px; }
-        .install-logo { width: 46px; height: 46px; border-radius: 14px; background: var(--accent-light); color: var(--accent); display: grid; place-items: center; font-family: 'Amiri', serif; font-size: 1.5rem; font-weight: 700; }
-        .install-text { display: flex; flex-direction: column; gap: 3px; }
-        .install-text strong { font-size: 1.05rem; color: var(--text-main); }
-        .install-text span { font-size: 0.95rem; color: var(--text-muted); }
-        .install-actions { display: flex; align-items: center; gap: 8px; }
-        .install-btn { background: var(--accent); color: #fff; padding: 8px 14px; border-radius: 10px; font-family: 'Tajawal'; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .install-overlay { position: fixed; inset: 0; background: rgba(22, 22, 28, 0.55); backdrop-filter: blur(3px); z-index: 140; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .install-overlay.show { display: flex; }
+        .install-banner { width: min(92vw, 460px); background: #252537; color: #fff; border-radius: 26px; padding: 24px 22px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 24px 55px rgba(0,0,0,0.35); }
+        .install-title { font-family: 'Amiri', serif; font-size: 2.2rem; text-align: center; color: #fff; margin-bottom: 4px; }
+        .install-brand { display: flex; align-items: center; justify-content: center; gap: 14px; }
+        .install-logo { width: 62px; height: 62px; border-radius: 16px; background: rgba(184, 153, 71, 0.2); color: var(--accent); display: grid; place-items: center; font-family: 'Amiri', serif; font-size: 2rem; font-weight: 700; border: 1px solid rgba(184,153,71,0.45); }
+        .install-text { display: flex; flex-direction: column; gap: 4px; text-align: center; }
+        .install-text strong { font-size: 1.8rem; color: #fff; font-family: 'Amiri', serif; }
+        .install-text span { font-size: 1.1rem; color: rgba(255,255,255,0.82); }
+        .install-actions { display: flex; align-items: center; justify-content: center; gap: 16px; }
+        .install-btn { background: var(--accent); color: #fff; min-width: 130px; padding: 10px 18px; border-radius: 12px; font-family: 'Tajawal'; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .install-btn.secondary { background: transparent; border: 1px solid rgba(255,255,255,0.35); color: #fff; }
         .install-btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
-        .install-close { background: transparent; color: var(--text-muted); font-size: 1.1rem; cursor: pointer; }
-        .install-hint { margin-top: 6px; font-size: 0.88rem; color: var(--text-muted); display: none; }
+        .install-hint { margin-top: 4px; font-size: 0.95rem; color: rgba(255,255,255,0.75); display: none; text-align: center; }
         .install-hint.show { display: block; }
-        .install-hint.success { color: #1f9d55; font-weight: 700; }
+        .install-hint.success { color: #83f0a3; font-weight: 700; }
 
         @media (max-width: 768px) {
             .logo-text { font-size: 3.5rem; } .mushaf-title { font-size: 3rem; }
@@ -185,14 +187,14 @@
             .visualizer-container { width: 200px; height: 200px; }
             .reciters-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
             .reciter-avatar { width: 70px; height: 70px; font-size: 2rem; }
-            .install-banner { top: 74px; width: calc(100% - 18px); padding: 10px; border-radius: 14px; flex-direction: column; align-items: stretch; gap: 10px; }
-            .install-brand { gap: 10px; }
-            .install-logo { width: 40px; height: 40px; border-radius: 11px; font-size: 1.25rem; }
-            .install-text { width: 100%; }
-            .install-text strong { font-size: 0.95rem; }
-            .install-text span { font-size: 0.85rem; }
-            .install-actions { justify-content: space-between; }
-            .install-btn { flex: 1; text-align: center; }
+            .install-overlay { padding: 14px; align-items: flex-end; }
+            .install-banner { width: 100%; border-radius: 22px 22px 18px 18px; padding: 20px 16px; gap: 14px; }
+            .install-title { font-size: 1.9rem; }
+            .install-logo { width: 52px; height: 52px; font-size: 1.7rem; }
+            .install-text strong { font-size: 1.55rem; }
+            .install-text span { font-size: 1rem; }
+            .install-actions { gap: 10px; }
+            .install-btn { flex: 1; min-width: 0; }
         }
     </style>
 </head>
@@ -200,18 +202,21 @@
 
 <div id="loader"><div class="logo-text">توبه</div></div>
 
-<div id="install-banner" class="install-banner">
-    <div class="install-brand">
-        <div class="install-logo">ت</div>
-        <div class="install-text">
-            <strong>ثبّت تطبيق توبه</strong>
-            <span>استخدمه كتطبيق ويب سريع من شاشة جهازك</span>
-            <p id="install-hint" class="install-hint"></p>
+<div id="install-overlay" class="install-overlay">
+    <div id="install-banner" class="install-banner">
+        <div class="install-title">تثبيت التطبيق</div>
+        <div class="install-brand">
+            <div class="install-logo">ت</div>
+            <div class="install-text">
+                <strong>توبه</strong>
+                <span>أضف التطبيق للشاشة الرئيسية للوصول السريع</span>
+            </div>
         </div>
-    </div>
-    <div class="install-actions">
-        <button id="install-app-btn" class="install-btn" type="button"><i class="fas fa-download"></i> تثبيت التطبيق</button>
-        <button id="install-dismiss-btn" class="install-close" type="button" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+        <p id="install-hint" class="install-hint"></p>
+        <div class="install-actions">
+            <button id="install-cancel-btn" class="install-btn secondary" type="button">إلغاء</button>
+            <button id="install-app-btn" class="install-btn" type="button"><i class="fas fa-download"></i> تثبيت</button>
+        </div>
     </div>
 </div>
 
@@ -810,16 +815,16 @@
     function showInstallBanner() {
         if (isStandaloneMode()) return;
         installBannerDismissed = false;
-        const banner = document.getElementById('install-banner');
-        if (!banner) return;
-        banner.classList.add('show');
+        const overlay = document.getElementById('install-overlay');
+        if (!overlay) return;
+        overlay.classList.add('show');
     }
 
     function hideInstallBanner() {
-        const banner = document.getElementById('install-banner');
-        if (!banner) return;
+        const overlay = document.getElementById('install-overlay');
+        if (!overlay) return;
         installBannerDismissed = true;
-        banner.classList.remove('show');
+        overlay.classList.remove('show');
     }
 
     async function triggerInstallPrompt() {
@@ -830,13 +835,14 @@
             deferredInstallPrompt = null;
             hasNativeInstallPrompt = false;
             if (choice.outcome === 'accepted') {
-                hideInstallBanner();
+                showInstallHint('تم تثبيت تطبيق ويب بنجاح', true);
+                setTimeout(() => hideInstallBanner(), 1200);
             }
             return;
         }
         setTimeout(() => {
             showInstallHint('من قائمة المتصفح اختر: إضافة إلى الشاشة الرئيسية.');
-        }, 1200);
+        }, 900);
     }
 
 
@@ -863,9 +869,9 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         const installBtn = document.getElementById('install-app-btn');
-        const dismissBtn = document.getElementById('install-dismiss-btn');
+        const cancelBtn = document.getElementById('install-cancel-btn');
         if (installBtn) installBtn.addEventListener('click', triggerInstallPrompt);
-        if (dismissBtn) dismissBtn.addEventListener('click', hideInstallBanner);
+        if (cancelBtn) cancelBtn.addEventListener('click', hideInstallBanner);
         showInstallBanner();
         setInterval(() => {
             if (!isStandaloneMode()) showInstallBanner();
