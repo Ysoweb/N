@@ -162,18 +162,54 @@
         .volume-slider { width: 70px; appearance: none; background: rgba(255,255,255,0.2); height: 2px; outline: none; transition: 0.3s; cursor: pointer; }
         .volume-slider::-webkit-slider-thumb { appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); cursor: pointer; }
         
+        
+
+        .install-banner { position: fixed; top: 86px; left: 50%; transform: translateX(-50%); width: min(92%, 760px); background: var(--glass-bg); border: 1px solid var(--accent-light); border-radius: 18px; padding: 14px 18px; z-index: 95; display: none; align-items: center; justify-content: space-between; gap: 14px; box-shadow: 0 10px 30px rgba(42,42,42,0.08); backdrop-filter: blur(12px); }
+        .install-banner.show { display: flex; animation: fadeIn 0.4s var(--transition) forwards; }
+        .install-brand { display: flex; align-items: center; gap: 12px; }
+        .install-logo { width: 46px; height: 46px; border-radius: 14px; background: var(--accent-light); color: var(--accent); display: grid; place-items: center; font-family: 'Amiri', serif; font-size: 1.5rem; font-weight: 700; }
+        .install-text { display: flex; flex-direction: column; gap: 3px; }
+        .install-text strong { font-size: 1.05rem; color: var(--text-main); }
+        .install-text span { font-size: 0.95rem; color: var(--text-muted); }
+        .install-actions { display: flex; align-items: center; gap: 8px; }
+        .install-btn { background: var(--accent); color: #fff; padding: 8px 14px; border-radius: 10px; font-family: 'Tajawal'; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .install-btn.secondary { background: transparent; border: 1px solid var(--accent-light); color: var(--text-main); }
+        .install-btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        .install-hint { margin-top: 6px; font-size: 0.88rem; color: var(--text-muted); display: none; }
+        .install-hint.show { display: block; }
+        .install-hint.success { color: #1f9d55; font-weight: 700; }
+
         @media (max-width: 768px) {
             .logo-text { font-size: 3.5rem; } .mushaf-title { font-size: 3rem; }
             .nav-links button { font-size: 1rem; padding: 5px; } .sheet-actions { grid-template-columns: repeat(3, 1fr); gap: 15px; }
             .visualizer-container { width: 200px; height: 200px; }
             .reciters-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
             .reciter-avatar { width: 70px; height: 70px; font-size: 2rem; }
+            .install-banner { top: 78px; width: 94%; padding: 12px; flex-direction: column; align-items: stretch; }
+            .install-actions { justify-content: space-between; }
+            .install-text { width: 100%; }
+            .install-btn { flex: 1; text-align: center; }
         }
     </style>
 </head>
 <body>
 
 <div id="loader"><div class="logo-text">توبه</div></div>
+
+<div id="install-banner" class="install-banner">
+    <div class="install-brand">
+        <div class="install-logo">ت</div>
+        <div class="install-text">
+            <strong>ثبّت تطبيق توبه</strong>
+            <span>تثبيت مباشر عبر Chrome</span>
+            <p id="install-hint" class="install-hint"></p>
+        </div>
+    </div>
+    <div class="install-actions">
+        <button id="install-cancel-btn" class="install-btn secondary" type="button">إلغاء</button>
+        <button id="install-app-btn" class="install-btn" type="button"><i class="fas fa-download"></i> تثبيت</button>
+    </div>
+</div>
 
 <nav>
     <div class="nav-links">
@@ -244,6 +280,9 @@
     </div>
 
     <div id="adhkar" class="section">
+        <div style="display:flex; justify-content:center; margin-bottom:20px;">
+            <button onclick="showRandomDhikr()" style="background:transparent; color:var(--accent); border:1px solid var(--accent-light); padding:8px 16px; border-radius:12px; font-family:Tajawal; font-weight:700; cursor:pointer;">ذكر عشوائي</button>
+        </div>
         <div id="adhkar-cats" class="adhkar-flat-list"></div>
         <div id="adhkar-view" style="display:none;">
             <button onclick="closeAdhkar()" style="background:transparent; font-size:2rem; cursor:pointer; margin-bottom:40px; text-align:center; display:block; width:100%; color:var(--text-muted);"><i class="fas fa-chevron-up"></i></button>
@@ -346,6 +385,10 @@
     let userBookmark = null;
     let currentFontSize = 1.8;
 
+    let deferredInstallPrompt = null;
+    let installBannerDismissed = false;
+    let hasNativeInstallPrompt = false;
+
     const topReciters =[
         {id: 'ar.alafasy', name: 'مشاري العفاسي', icon: 'fas fa-user'},
         {id: 'ar.abdulbasitmurattal', name: 'عبد الباسط عبد الصمد', icon: 'fas fa-user'},
@@ -358,10 +401,51 @@
         {id: 'ar.hudhaify', name: 'علي الحذيفي', icon: 'fas fa-user'},
         {id: 'ar.muhammadjibreel', name: 'محمد جبريل', icon: 'fas fa-user'},
         {id: 'ar.aymanswaid', name: 'أيمن سويد', icon: 'fas fa-user'},
-        {id: 'ar.abdullahbasfar', name: 'عبد الله بصفر', icon: 'fas fa-user'}
+        {id: 'ar.abdullahbasfar', name: 'عبد الله بصفر', icon: 'fas fa-user'},
+        {id: 'ar.saoodshuraym', name: 'سعود الشريم (إصدار آخر)', icon: 'fas fa-user'},
+        {id: 'ar.khalefaaltunaiji', name: 'خليفة الطنيجي', icon: 'fas fa-user'},
+        {id: 'ar.ahmedajamy', name: 'أحمد العجمي', icon: 'fas fa-user'},
+        {id: 'ar.faresabbad', name: 'فارس عباد', icon: 'fas fa-user'},
+        {id: 'ar.abdurrahmaansudais', name: 'عبدالرحمن السديس (إصدار آخر)', icon: 'fas fa-user'},
+        {id: 'ar.yasseraldossari', name: 'ياسر الدوسري (إصدار آخر)', icon: 'fas fa-user'},
+        {id: 'ar.nabilrifai', name: 'نبيل الرفاعي', icon: 'fas fa-user'},
+        {id: 'ar.hanirifai', name: 'هاني الرفاعي', icon: 'fas fa-user'},
+        {id: 'ar.mohammadayyoub', name: 'محمد أيوب', icon: 'fas fa-user'},
+        {id: 'ar.abdullahawad', name: 'عبد الله عواد الجهني', icon: 'fas fa-user'},
+        {id: 'ar.ibrahimakhbar', name: 'إبراهيم الأخضر', icon: 'fas fa-user'},
+        {id: 'ar.sahlYassin', name: 'سهل ياسين', icon: 'fas fa-user'},
+        {id: 'ar.hatemfarid', name: 'حاتم فريد الواعر', icon: 'fas fa-user'},
+        {id: 'ar.muhammadtabalawi', name: 'محمد الطبلاوي', icon: 'fas fa-user'},
+        {id: 'ar.ahmedkhedralturky', name: 'أحمد خضر التركي', icon: 'fas fa-user'},
+        {id: 'ar.idrisabkar', name: 'إدريس أبكر', icon: 'fas fa-user'},
+        {id: 'ar.karimmansouri', name: 'كريم منصوري', icon: 'fas fa-user'},
+        {id: 'ar.salihaaltalib', name: 'صالح آل طالب', icon: 'fas fa-user'},
+        {id: 'ar.alshatri', name: 'أبو بكر الشاطري', icon: 'fas fa-user'},
+        {id: 'ar.muaiqly', name: 'ماهر المعيقلي (إصدار آخر)', icon: 'fas fa-user'}
     ];
     let activeMushafReciter = 'ar.alafasy';
     let activeListenReciter = null;
+
+    async function loadExtraReciters() {
+        try {
+            const res = await fetch('https://api.alquran.cloud/v1/edition?format=audio&language=ar');
+            const data = await res.json();
+            if (!data?.data) return;
+            const mapped = data.data
+                .filter(r => r.identifier && r.type === 'versebyverse')
+                .slice(0, 140)
+                .map(r => ({ id: r.identifier, name: r.name || r.englishName || r.identifier, icon: 'fas fa-user' }));
+            const merged = [...topReciters];
+            mapped.forEach(r => {
+                if (!merged.find(x => x.id === r.id)) merged.push(r);
+            });
+            const capped = merged.slice(0, 100);
+            topReciters.length = 0;
+            capped.forEach(r => topReciters.push(r));
+            populateMushafReciters();
+            renderRecitersGrid();
+        } catch(e) {}
+    }
 
     const radioStations =[
         { id: 'cairo', name: "إذاعة القرآن الكريم - القاهرة", url: "https://stream.radiojar.com/8s5u5tpdtwzuv" },
@@ -383,7 +467,7 @@
 
     window.onload = () => {
         setTimeout(() => { document.getElementById('loader').style.opacity = '0'; setTimeout(() => document.getElementById('loader').style.display = 'none', 800); }, 1000);
-        loadBookmark(); loadSurahs(); loadAdhkar(); renderRadioStations(); populateMushafReciters(); renderRecitersGrid();
+        loadBookmark(); loadSurahs(); loadAdhkar(); renderRadioStations(); populateMushafReciters(); renderRecitersGrid(); loadExtraReciters();
         document.getElementById('radio-audio').src = radioStations[0].url;
     };
 
@@ -612,14 +696,22 @@
         setupPlayerUI(`۝ ${ayah.text} ۝`); syncHighlight();
     }
 
-    function playFullSurah(surahId, surahName) {
+    async function playFullSurah(surahId, surahName) {
         if(!radioAudio.paused) toggleRadio();
         if(!activeListenReciter) return;
-        playState.mode = 'surah'; playState.surahId = surahId; playState.currentReciterName = activeListenReciter.name;
-        audio.src = `https://cdn.islamic.network/quran/audio-surah/128/${activeListenReciter.id}/${surahId}.mp3`;
-        audio.playbackRate = playState.speed; audio.play();
-        playerReciterIcon.className = activeListenReciter.icon;
-        setupPlayerUI(`سورة ${surahName} - ${playState.currentReciterName}`);
+        try {
+            const res = await fetch(`https://api.alquran.cloud/v1/surah/${surahId}/${activeListenReciter.id}`);
+            const data = await res.json();
+            if(!data?.data?.ayahs?.length) return;
+            playState.mode = 'ayah';
+            playState.surahId = surahId;
+            playState.currentReciterName = activeListenReciter.name;
+            playState.ayahs = data.data.ayahs;
+            playState.currentIndex = 0;
+            playerReciterIcon.className = activeListenReciter.icon;
+            setupPlayerUI(`سورة ${surahName} - ${playState.currentReciterName}`);
+            executePlayAyah();
+        } catch(e) {}
     }
 
     function setupPlayerUI(textMsg) {
@@ -738,9 +830,96 @@
 
     async function loadAdhkar() {
         try {
-            const res = await fetch('https://raw.githubusercontent.com/nawafalqari/azkar-api/56df51279ab6eb86dc2f6202c7de26c8948331c1/azkar.json'); adhkarData = await res.json(); const cont = document.getElementById('adhkar-cats'); const excludedCats =["أدعية قرآنية", "أدعية الأنبياء", "دعاء ختم القرآن الكريم"];
-            Object.keys(adhkarData).forEach(cat => { if(!excludedCats.includes(cat)) { const d = document.createElement('div'); d.className = 'adhkar-cat-title'; d.innerText = cat; d.onclick = () => openAdhkarCat(cat); cont.appendChild(d); } });
+            const res = await fetch('https://raw.githubusercontent.com/nawafalqari/azkar-api/56df51279ab6eb86dc2f6202c7de26c8948331c1/azkar.json');
+            adhkarData = await res.json();
+            enrichAdhkarData();
+            renderAdhkarCategories();
         } catch(e) {}
+    }
+
+    function enrichAdhkarData() {
+        const extras = {
+            'أذكار الاستغفار': [
+                { content: 'أستغفر الله العظيم الذي لا إله إلا هو الحي القيوم وأتوب إليه', count: '100' },
+                { content: 'رب اغفر لي وتب علي إنك أنت التواب الرحيم', count: '100' },
+                { content: 'اللهم اغفر لي وارحمني واهدني وعافني وارزقني', count: '50' }
+            ],
+            'أدعية الكرب': [
+                { content: 'لا إله إلا أنت سبحانك إني كنت من الظالمين', count: '40' },
+                { content: 'حسبي الله لا إله إلا هو عليه توكلت وهو رب العرش العظيم', count: '7' },
+                { content: 'اللهم رحمتك أرجو فلا تكلني إلى نفسي طرفة عين', count: '33' }
+            ],
+            'أذكار متنوعة إضافية': [
+                { content: 'اللهم صل وسلم على نبينا محمد', count: '100' },
+                { content: 'سبحان الله وبحمده سبحان الله العظيم', count: '100' },
+                { content: 'لا حول ولا قوة إلا بالله', count: '100' }
+            ],
+            'أذكار الصبر': [
+                { content: 'إنا لله وإنا إليه راجعون، اللهم أجرني في مصيبتي واخلف لي خيرًا منها', count: '20' },
+                { content: 'اللهم لا سهل إلا ما جعلته سهلاً', count: '33' },
+                { content: 'اللهم ألهمني رشدي وقني شر نفسي', count: '40' }
+            ],
+            'أذكار الرزق والبركة': [
+                { content: 'اللهم اكفني بحلالك عن حرامك وأغنني بفضلك عمن سواك', count: '50' },
+                { content: 'رب إني لما أنزلت إلي من خير فقير', count: '70' },
+                { content: 'اللهم بارك لنا فيما رزقتنا', count: '33' }
+            ],
+            'أذكار السفر': [
+                { content: 'سبحان الذي سخر لنا هذا وما كنا له مقرنين وإنا إلى ربنا لمنقلبون', count: '3' },
+                { content: 'اللهم إنا نسألك في سفرنا هذا البر والتقوى', count: '3' },
+                { content: 'اللهم أنت الصاحب في السفر والخليفة في الأهل', count: '3' }
+            ],
+            'أذكار قبل النوم': [
+                { content: 'باسمك اللهم أموت وأحيا', count: '1' },
+                { content: 'اللهم قني عذابك يوم تبعث عبادك', count: '3' },
+                { content: 'سبحان الله 33 والحمد لله 33 والله أكبر 34', count: '1' }
+            ],
+            'أذكار بعد الصلاة': [
+                { content: 'أستغفر الله، أستغفر الله، أستغفر الله', count: '1' },
+                { content: 'اللهم أنت السلام ومنك السلام تباركت يا ذا الجلال والإكرام', count: '1' },
+                { content: 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير', count: '10' }
+            ],
+            'أدعية الوالدين': [
+                { content: 'رب ارحمهما كما ربياني صغيرا', count: '40' },
+                { content: 'رب اغفر لي ولوالدي وللمؤمنين يوم يقوم الحساب', count: '30' },
+                { content: 'اللهم اغفر لوالدي وارفع درجاتهما في المهديين', count: '20' }
+            ],
+            'أدعية عامة جامعة': [
+                { content: 'ربنا آتنا في الدنيا حسنة وفي الآخرة حسنة وقنا عذاب النار', count: '100' },
+                { content: 'ربنا لا تزغ قلوبنا بعد إذ هديتنا وهب لنا من لدنك رحمة', count: '70' },
+                { content: 'اللهم إني أسألك العفو والعافية في الدنيا والآخرة', count: '60' }
+            ]
+        };
+        Object.keys(extras).forEach(cat => {
+            if(!adhkarData[cat]) adhkarData[cat] = [];
+            adhkarData[cat] = [...adhkarData[cat], ...extras[cat]];
+        });
+    }
+
+    function renderAdhkarCategories() {
+        const cont = document.getElementById('adhkar-cats');
+        cont.innerHTML = '';
+        Object.keys(adhkarData).forEach(cat => {
+            const d = document.createElement('div');
+            d.className = 'adhkar-cat-title';
+            d.innerText = cat;
+            d.onclick = () => openAdhkarCat(cat);
+            cont.appendChild(d);
+        });
+    }
+
+    function showRandomDhikr() {
+        const cats = Object.keys(adhkarData || {});
+        if(!cats.length) return;
+        const cat = cats[Math.floor(Math.random() * cats.length)];
+        const list = adhkarData[cat] || [];
+        if(!list.length) return;
+        const item = list[Math.floor(Math.random() * list.length)];
+        openAdhkarCat(cat);
+        setTimeout(() => {
+            const top = document.getElementById('adhkar-items');
+            if(top) top.insertAdjacentHTML('afterbegin', `<div style="text-align:center; color:var(--accent); margin-bottom:16px;">ذكر عشوائي: ${item.content}</div>`);
+        }, 80);
     }
 
     function openAdhkarCat(cat) { document.getElementById('adhkar-cats').style.display = 'none'; document.getElementById('adhkar-view').style.display = 'block'; const cont = document.getElementById('adhkar-items'); cont.innerHTML = `<h2 style="text-align:center; font-family:'Amiri'; font-size:3rem; margin-bottom:40px; color:var(--accent);">${cat}</h2>`; adhkarData[cat].forEach(item => { let max = item.count ? parseInt(String(item.count).replace(/[^0-9]/g, '')) || 1 : 1; const d = document.createElement('div'); d.className = 'dhikr-flat-item'; d.innerHTML = `<div class="dhikr-content">${item.content}</div><div class="dhikr-counter" onclick="incDhikr(this, ${max})">${toArabicNum(max)}</div>`; cont.appendChild(d); }); window.scrollTo(0,0); }
@@ -758,6 +937,78 @@
     async function sendAiMsg(e) { if(e) e.preventDefault(); const inp = document.getElementById('ai-input'); const txt = inp.value.trim(); if(!txt) return; appendAiMsg(txt, 'user'); inp.value = ''; aiHistory.push({role: 'user', content: txt}); const box = document.getElementById('ai-chatbox'); const aiDiv = document.createElement('div'); aiDiv.className = 'msg-flat ai'; aiDiv.innerHTML = 'يفكر...'; box.appendChild(aiDiv); box.scrollTop = box.scrollHeight; try { const resp = await puter.ai.chat(aiHistory, { model: 'deepseek-chat', stream: true }); aiDiv.innerHTML = ''; let full = ''; for await (const part of resp) { full += part?.text || ''; aiDiv.innerText = full; box.scrollTop = box.scrollHeight; } aiHistory.push({role: 'assistant', content: full}); } catch(err) { aiDiv.innerText = 'عذراً، حدث خطأ في الاتصال.'; } }
 
     function appendAiMsg(txt, cls) { const box = document.getElementById('ai-chatbox'); const d = document.createElement('div'); d.className = 'msg-flat ' + cls; d.innerText = txt; box.appendChild(d); box.scrollTop = box.scrollHeight; }
+
+    function isStandaloneMode() {
+        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    }
+
+    function isChromeInstallSupported() {
+        const ua = navigator.userAgent || '';
+        return /Chrome|CriOS/.test(ua) && !/Edg|OPR|SamsungBrowser/.test(ua);
+    }
+
+    function showInstallBanner() {
+        if (isStandaloneMode() || !deferredInstallPrompt || !isChromeInstallSupported()) return;
+        installBannerDismissed = false;
+        const banner = document.getElementById('install-banner');
+        if (!banner) return;
+        banner.classList.add('show');
+    }
+
+    function hideInstallBanner() {
+        const banner = document.getElementById('install-banner');
+        if (!banner) return;
+        installBannerDismissed = true;
+        banner.classList.remove('show');
+    }
+
+    async function triggerInstallPrompt() {
+        showInstallHint('تم تثبيت تطبيق ويب', true);
+        if (deferredInstallPrompt) {
+            deferredInstallPrompt.prompt();
+            const choice = await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            hasNativeInstallPrompt = false;
+            if (choice.outcome === 'accepted') {
+                showInstallHint('تم تثبيت تطبيق ويب بنجاح', true);
+                setTimeout(() => hideInstallBanner(), 1200);
+            }
+            return;
+        }
+    }
+
+
+    function showInstallHint(message, isSuccess = false) {
+        const hint = document.getElementById('install-hint');
+        if (!hint) return;
+        hint.textContent = message;
+        hint.classList.add('show');
+        hint.classList.toggle('success', isSuccess);
+    }
+
+    window.addEventListener('beforeinstallprompt', (event) => {
+        event.preventDefault();
+        deferredInstallPrompt = event;
+        hasNativeInstallPrompt = true;
+        const hint = document.getElementById('install-hint'); if (hint) hint.classList.remove('show');
+        showInstallBanner();
+    });
+
+    window.addEventListener('appinstalled', () => {
+        showInstallHint('تم تثبيت تطبيق ويب', true);
+        setTimeout(() => hideInstallBanner(), 1000);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const installBtn = document.getElementById('install-app-btn');
+        const cancelBtn = document.getElementById('install-cancel-btn');
+        if (installBtn) installBtn.addEventListener('click', triggerInstallPrompt);
+        if (cancelBtn) cancelBtn.addEventListener('click', hideInstallBanner);
+        setInterval(() => {
+            if (!isStandaloneMode() && !installBannerDismissed) showInstallBanner();
+        }, 1800000);
+    });
+
 </script>
 </body>
 </html>
