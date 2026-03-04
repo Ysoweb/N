@@ -162,18 +162,52 @@
         .volume-slider { width: 70px; appearance: none; background: rgba(255,255,255,0.2); height: 2px; outline: none; transition: 0.3s; cursor: pointer; }
         .volume-slider::-webkit-slider-thumb { appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); cursor: pointer; }
         
+        
+
+        .install-banner { position: fixed; top: 86px; left: 50%; transform: translateX(-50%); width: min(92%, 760px); background: var(--glass-bg); border: 1px solid var(--accent-light); border-radius: 18px; padding: 14px 18px; z-index: 95; display: none; align-items: center; justify-content: space-between; gap: 14px; box-shadow: 0 10px 30px rgba(42,42,42,0.08); backdrop-filter: blur(12px); }
+        .install-banner.show { display: flex; animation: fadeIn 0.4s var(--transition) forwards; }
+        .install-brand { display: flex; align-items: center; gap: 12px; }
+        .install-logo { width: 46px; height: 46px; border-radius: 14px; background: var(--accent-light); color: var(--accent); display: grid; place-items: center; font-family: 'Amiri', serif; font-size: 1.5rem; font-weight: 700; }
+        .install-text { display: flex; flex-direction: column; gap: 3px; }
+        .install-text strong { font-size: 1.05rem; color: var(--text-main); }
+        .install-text span { font-size: 0.95rem; color: var(--text-muted); }
+        .install-actions { display: flex; align-items: center; gap: 8px; }
+        .install-btn { background: var(--accent); color: #fff; padding: 8px 14px; border-radius: 10px; font-family: 'Tajawal'; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .install-btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        .install-close { background: transparent; color: var(--text-muted); font-size: 1.1rem; cursor: pointer; }
+        .install-hint { margin-top: 6px; font-size: 0.88rem; color: var(--text-muted); display: none; }
+        .install-hint.show { display: block; }
+
         @media (max-width: 768px) {
             .logo-text { font-size: 3.5rem; } .mushaf-title { font-size: 3rem; }
             .nav-links button { font-size: 1rem; padding: 5px; } .sheet-actions { grid-template-columns: repeat(3, 1fr); gap: 15px; }
             .visualizer-container { width: 200px; height: 200px; }
             .reciters-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
             .reciter-avatar { width: 70px; height: 70px; font-size: 2rem; }
+            .install-banner { top: 78px; width: 94%; padding: 12px; flex-direction: column; align-items: stretch; }
+            .install-actions { justify-content: space-between; }
+            .install-text { width: 100%; }
         }
     </style>
 </head>
 <body>
 
 <div id="loader"><div class="logo-text">توبه</div></div>
+
+<div id="install-banner" class="install-banner">
+    <div class="install-brand">
+        <div class="install-logo">ت</div>
+        <div class="install-text">
+            <strong>ثبّت تطبيق توبه</strong>
+            <span>استخدمه كتطبيق ويب سريع من شاشة جهازك</span>
+            <p id="install-hint" class="install-hint"></p>
+        </div>
+    </div>
+    <div class="install-actions">
+        <button id="install-app-btn" class="install-btn" type="button"><i class="fas fa-download"></i> تثبيت</button>
+        <button id="install-dismiss-btn" class="install-close" type="button" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+    </div>
+</div>
 
 <nav>
     <div class="nav-links">
@@ -345,6 +379,10 @@
     const arabicNumbers =['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
     let userBookmark = null;
     let currentFontSize = 1.8;
+
+    let deferredInstallPrompt = null;
+    let installBannerDismissed = localStorage.getItem('toba_install_dismissed') === '1';
+    let hasNativeInstallPrompt = false;
 
     const topReciters =[
         {id: 'ar.alafasy', name: 'مشاري العفاسي', icon: 'fas fa-user'},
@@ -758,6 +796,77 @@
     async function sendAiMsg(e) { if(e) e.preventDefault(); const inp = document.getElementById('ai-input'); const txt = inp.value.trim(); if(!txt) return; appendAiMsg(txt, 'user'); inp.value = ''; aiHistory.push({role: 'user', content: txt}); const box = document.getElementById('ai-chatbox'); const aiDiv = document.createElement('div'); aiDiv.className = 'msg-flat ai'; aiDiv.innerHTML = 'يفكر...'; box.appendChild(aiDiv); box.scrollTop = box.scrollHeight; try { const resp = await puter.ai.chat(aiHistory, { model: 'deepseek-chat', stream: true }); aiDiv.innerHTML = ''; let full = ''; for await (const part of resp) { full += part?.text || ''; aiDiv.innerText = full; box.scrollTop = box.scrollHeight; } aiHistory.push({role: 'assistant', content: full}); } catch(err) { aiDiv.innerText = 'عذراً، حدث خطأ في الاتصال.'; } }
 
     function appendAiMsg(txt, cls) { const box = document.getElementById('ai-chatbox'); const d = document.createElement('div'); d.className = 'msg-flat ' + cls; d.innerText = txt; box.appendChild(d); box.scrollTop = box.scrollHeight; }
+
+    function isStandaloneMode() {
+        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    }
+
+    function showInstallBanner() {
+        if (installBannerDismissed || isStandaloneMode()) return;
+        const banner = document.getElementById('install-banner');
+        if (!banner) return;
+        banner.classList.add('show');
+    }
+
+    function hideInstallBanner(saveDismiss = false) {
+        const banner = document.getElementById('install-banner');
+        if (!banner) return;
+        banner.classList.remove('show');
+        if (saveDismiss) {
+            installBannerDismissed = true;
+            localStorage.setItem('toba_install_dismissed', '1');
+        }
+    }
+
+    async function triggerInstallPrompt() {
+        if (deferredInstallPrompt) {
+            deferredInstallPrompt.prompt();
+            const choice = await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            hasNativeInstallPrompt = false;
+            if (choice.outcome === 'accepted') {
+                hideInstallBanner(true);
+            } else {
+                showInstallHint('يمكنك التثبيت لاحقًا من قائمة المتصفح.');
+            }
+            return;
+        }
+        showInstallHint('من قائمة المتصفح اختر: إضافة إلى الشاشة الرئيسية.');
+    }
+
+
+    function showInstallHint(message) {
+        const hint = document.getElementById('install-hint');
+        if (!hint) return;
+        hint.textContent = message;
+        hint.classList.add('show');
+    }
+
+    window.addEventListener('beforeinstallprompt', (event) => {
+        event.preventDefault();
+        deferredInstallPrompt = event;
+        hasNativeInstallPrompt = true;
+        const hint = document.getElementById('install-hint'); if (hint) hint.classList.remove('show');
+        showInstallBanner();
+    });
+
+    window.addEventListener('appinstalled', () => {
+        hideInstallBanner(true);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const installBtn = document.getElementById('install-app-btn');
+        const dismissBtn = document.getElementById('install-dismiss-btn');
+        if (installBtn) installBtn.addEventListener('click', triggerInstallPrompt);
+        if (dismissBtn) dismissBtn.addEventListener('click', () => hideInstallBanner(true));
+        showInstallBanner();
+        setTimeout(() => {
+            if (!hasNativeInstallPrompt && !isStandaloneMode() && !installBannerDismissed) {
+                showInstallHint('بعض المتصفحات تتطلب فتح القائمة ثم اختيار إضافة إلى الشاشة الرئيسية.');
+            }
+        }, 900);
+    });
+
 </script>
 </body>
 </html>
